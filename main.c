@@ -11,6 +11,10 @@
 #define SYSCON_POWEROFF (*(volatile uint32_t*)(SYSCON_BASE))
 #define POWEROFF_MAGIC 0x5555
 
+typedef struct {
+  const char name[16];
+  void (*handler)(void);
+}command_table;
 
 int uart_getc(void){
   while(UART0_FR & UART0_FR_RXFE);
@@ -25,22 +29,25 @@ void uart_puts(const char *s){
     uart_putc(*s++);
   }
 }
-int str_eq(const char *a, const char *b){
-  while (*a && *b){
-    if (*a++ != *b++) return 0;
-  }
-  return *a == *b;
+
+int str_eq(const char *a, const char *b) {
+    while(*a && * b && *a == *b){
+      a++;
+      b++;  
+    }
+    return *a == '\0' && *b == '\0';
 }
+
 
 void read_line(char *term_buf,int max){
   int i = 0;
-  for (int j = 0; j < max;j++) term_buf[i] = 0;
+  for (int j = 0; j < max;j++) term_buf[j] = 0;
   while(1){
     char c = uart_getc();
 
     if (c == '\r' || c == '\n'){
       term_buf[i] = '\0';
-      uart_puts("\r \n");
+      uart_puts("\r\n");
       return;
     }
     if ((c == 0x7F || c == 0x08) && i > 0){
@@ -60,7 +67,12 @@ void read_line(char *term_buf,int max){
     }
   }
 }
-
+void help_cmd(void){
+  uart_puts("help - shows this table\r\n");
+  uart_puts("clear - clears terminal\r\n");
+  uart_puts("exit - exits this ??? (Still don't know how to call it)\r\n");
+  return;
+}
 void poweroff(void){
   uart_puts("Caught exit prompt, quitting... I hope you enjoyed baremetal program.");
   SYSCON_POWEROFF = POWEROFF_MAGIC;
@@ -72,18 +84,25 @@ void clear_cmd(void){
 void unknow_cmd(void){
   uart_puts("I do not recognize this command.\n");
 }
-
-void run_command(const char *prompt){
-  if(str_eq(prompt, "")) return;
-  else if (str_eq(prompt, "exit")) {poweroff(); return;}
-  else if (str_eq(prompt, "clear")){clear_cmd(); return;}
-  else {unknow_cmd(); return;}
-  
+static command_table commands[] = {
+  {"exit",poweroff},
+  {"clear", clear_cmd},
+  {"help", help_cmd}
+};
+void run_command(const char *prompt) {
+    if (str_eq(prompt, "")) return;
+    int count = sizeof(commands) / sizeof(commands[0]);
+    for (int i = 0; i < count; i++) {
+            if (str_eq(prompt, commands[i].name)) {
+            commands[i].handler();
+            return;
+        }
+    }
+    unknow_cmd();
 }
 int main(void){
   uart_puts("Hello World!\n");
   char term_buf[128];
-  int i = 0;
   uart_puts("Press CTRL+C to exit\n");
   while (1){
     uart_puts("> ");

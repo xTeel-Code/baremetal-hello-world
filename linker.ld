@@ -1,12 +1,14 @@
 ENTRY(_start)
 MEMORY {
-  RAM (rwx) : ORIGIN = 0x40000000, LENGTH = 128M 
+  RAM (rwx) : ORIGIN = 0x40100000, LENGTH = 128M 
 }
 SECTIONS {
-  . = 0x40000000;
+  . = 0x40100000;
   .text : {
     *(.text.boot)
     *(.text*)
+  } > RAM
+  .rodata :{
     *(.rodata*)
   } > RAM
   .data : {
