@@ -1,6 +1,8 @@
 #include <stdint.h>
 
 
+
+
 #define UART0_BASE 0x09000000UL
 #define UART0_DR (*(volatile uint32_t*)(UART0_BASE + 0x00))
 #define UART0_FR (*(volatile uint32_t*)(UART0_BASE + 0x18))
@@ -10,11 +12,22 @@
 #define SYSCON_BASE 0x09080000UL
 #define SYSCON_POWEROFF (*(volatile uint32_t*)(SYSCON_BASE))
 #define POWEROFF_MAGIC 0x5555
+//RAM storage
+#define MAX_ENTRIES 16
+#define MAX_KEY_LEN 32
+#define MAX_VAL_LEN 128
+typedef struct {
+  char key[MAX_KEY_LEN];
+  char val[MAX_VAL_LEN];
+} entry_t;
+
+static entry_t storage[MAX_ENTRIES];
+static int store_count = 0;
 
 typedef struct {
   const char name[16];
   void (*handler)(void);
-}command_table;
+}command_t;
 
 int uart_getc(void){
   while(UART0_FR & UART0_FR_RXFE);
@@ -68,6 +81,9 @@ void read_line(char *term_buf,int max){
   }
 }
 void help_cmd(void){
+  uart_puts("==========================\r\n");
+  uart_puts("     Bare Metal\r\n");
+  uart_puts("==========================\r\n");
   uart_puts("help - shows this table\r\n");
   uart_puts("clear - clears terminal\r\n");
   uart_puts("exit - exits this ??? (Still don't know how to call it)\r\n");
@@ -83,13 +99,12 @@ void clear_cmd(void){
 }
 void unknow_cmd(void){
   uart_puts("I do not recognize this command.\n");
-}
-static command_table commands[] = {
+}static command_t commands[] = {
   {"exit",poweroff},
   {"clear", clear_cmd},
-  {"help", help_cmd}
+  {"help", help_cmd},
 };
-void run_command(const char *prompt) {
+void run_command(const char *prompt,int argc,char **argv) {
     if (str_eq(prompt, "")) return;
     int count = sizeof(commands) / sizeof(commands[0]);
     for (int i = 0; i < count; i++) {
@@ -100,13 +115,13 @@ void run_command(const char *prompt) {
     }
     unknow_cmd();
 }
-int main(void){
+int main(int argc, char* argv[]){
   uart_puts("Hello World!\n");
   char term_buf[128];
   uart_puts("Press CTRL+C to exit\n");
   while (1){
     uart_puts("> ");
     read_line(term_buf, sizeof(term_buf));
-    run_command(term_buf);
+    run_command(term_buf, argc, argv);
   }
 }
