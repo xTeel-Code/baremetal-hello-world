@@ -17,8 +17,12 @@ void uart_putc(char c){
   while (UART0_FR & UART0_FR_TXFF);
   UART0_DR = (uint32_t) c;
 }
-void uart_puts(const char *s){
+void uart_puts(const char *s, int newLineAtEnd){
   while(*s){
     uart_putc(*s++);
+  }
+  if (newLineAtEnd){
+    uart_putc('\r');
+    uart_putc('\n');
   }
 }

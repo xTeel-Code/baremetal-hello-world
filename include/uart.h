@@ -11,7 +11,7 @@
 #define UART0_FR_RXFE (1U << 4)
 
 void uart_putc(char c);
-void uart_puts(const char *s);
+void uart_puts(const char *s, int newLineAtEnd);
 int uart_getc(void);
 
 #endif

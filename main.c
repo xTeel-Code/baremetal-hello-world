@@ -103,14 +103,14 @@ void run_command(int argc,char **argv) {
     unknown_cmd(argc,argv);
 }
 int main(void){
-  uart_puts("Hello World!\n");
+  uart_puts("Hello World!",1);
   char term_buf[128];
   int max_args = 6;
   int argc;
   char *argv[8];
-  uart_puts("Press CTRL+C to exit\n");
+  uart_puts("Press CTRL+C to exit",1);
   while (1){
-    uart_puts("> ");
+    uart_puts("> ",0);
     read_line(term_buf, sizeof(term_buf));
     argc = parse_args(term_buf,argv,max_args);
     run_command(argc, argv);
