@@ -1,55 +1,56 @@
-#include <stdint.h>
-#include "include/commands.h"
-#include "include/uart.h"
-#include "include/string.h"
+#include "../include/uart.h"
+#include "../include/string.h"
 #define SYSCON_BASE 0x09080000UL
 #define SYSCON_POWEROFF (*(volatile uint32_t*)(SYSCON_BASE))
 #define POWEROFF_MAGIC 0x5555
 
-#define MAX_ENTRIES 16
-#define MAX_KEY_LEN 32
-#define MAX_VAL_LEN 128
-
-
-typedef struct {
-  char key[MAX_KEY_LEN];
-  char val[MAX_VAL_LEN];
-} entry_t;
-
-static entry_t storage[MAX_ENTRIES];
-static int store_count = 0;
 typedef struct {
     const char name[16];
     void (*handler)(int argc, char **argv);
 } command_t;
 
 
+
+void help_cmd(int argc, char **argv){
+  uart_puts("==========================\r\n");
+  uart_puts("     Bare Metal\r\n");
+  uart_puts("==========================\r\n");
+  uart_puts("help - shows this table\r\n");
+  uart_puts("clear - clears terminal\r\n");
+  uart_puts("exit - exits this ??? (Still don't know how to call it)\r\n");
+  return;
+}
+void poweroff(int argc, char **argv){
+  uart_puts("Caught exit prompt, quitting... I hope you enjoyed baremetal program.");
+  SYSCON_POWEROFF = POWEROFF_MAGIC;
+  while(1){}
+}
+void clear_cmd(int argc, char **argv){
+  uart_puts("\033[2J\033[H");
+}
+void unknown_cmd(int argc, char **argv){
+  uart_puts("I do not recognize this command.\n");
+}
+
 int parse_args(char *line, char **argv, int max_args) {
     int argc = 0;
-
     while (*line && argc < max_args) {
         while (*line == ' ' || *line == '\t') {
             line++;
         }
-
         if (*line == '\0') {
             break;
         }
-
         argv[argc++] = line;
-
         while (*line && *line != ' ' && *line != '\t') {
             line++;
         }
-
         if (*line == '\0') {
             break;
         }
-
         *line = '\0';
         line++;
     }
-
     return argc;
 }
 
@@ -82,7 +83,14 @@ void read_line(char *term_buf,int max){
   }
 }
 void echo(int argc, char **argv){
-  uart_puts(*argv);
+  for(int i = 1; i < argc; i++){
+     uart_puts(argv[i]);
+     if (i+1 < argc){
+       uart_putc(' ');
+     }
+  }
+  uart_puts("\r\n");
+  
 }
 
 static command_t commands[] = {
@@ -101,18 +109,4 @@ void run_command(int argc,char **argv) {
         }
     }
     unknown_cmd(argc,argv);
-}
-int main(void){
-  uart_puts("Hello World!\n");
-  char term_buf[128];
-  int max_args = 6;
-  int argc;
-  char *argv[8];
-  uart_puts("Press CTRL+C to exit\n");
-  while (1){
-    uart_puts("> ");
-    read_line(term_buf, sizeof(term_buf));
-    argc = parse_args(term_buf,argv,max_args);
-    run_command(argc, argv);
-  }
 }
