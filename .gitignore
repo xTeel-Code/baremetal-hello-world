@@ -1,2 +1,18 @@
+# Build output
+build/
+*.o
+*.d
+*.elf
+*.bin
 kernel.bin
 kernel.elf
+
+# Editor / OS cruft
+.DS_Store
+.helix/
+*.swp
+*~
+compile_commands.json
+.cache/
+
+TODO.md

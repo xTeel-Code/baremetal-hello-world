@@ -20,7 +20,9 @@ void help_cmd(int argc, char **argv){
   uart_puts("help - shows this table",1);
   uart_puts("clear - clears terminal",1);
   uart_puts("exit - exits this ??? (Still don't know how to call it)",1);
-  return;
+  uart_puts("save - writes on stack", 1);
+  uart_puts("read - read on stack", 1);
+  uart_puts("echo - echoes the text", 1);
 }
 void poweroff(int argc, char **argv){
   uart_puts("Caught exit prompt, quitting... I hope you enjoyed baremetal program.",1);
@@ -92,7 +94,7 @@ void echo(int argc, char **argv){
      }
   }
   uart_puts("\r\n",0);
-  
+
 }
 
 static command_t commands[] = {
